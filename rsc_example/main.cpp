@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <conio.h>
 
 #include <rsc/Card.h>
@@ -6,7 +7,13 @@
 #include <rsc/Context.h>
 
 std::ostream& operator<<(std::ostream &os, std::vector<BYTE> const &bytes) {
-    // TODO: print bytes
+    std::ios::fmtflags flags(os.flags());
+    os << std::hex << std::uppercase << std::setfill('0');
+    for (auto b : bytes) {
+        os << std::setw(2) << static_cast<int>(b) << ' ';
+    }
+    os.flags(flags);
+    return os;
 }
 
 std::ostream& operator<<(std::ostream &os, rsc::rAPDU const &rapdu) {
@@ -14,6 +21,7 @@ std::ostream& operator<<(std::ostream &os, rsc::rAPDU const &rapdu) {
 }
 
 int main() {
+    std::ios::sync_with_stdio(false);
     try {
         rsc::Context context(SCARD_SCOPE_USER);
         rsc::Readers readers(context, SCARD_DEFAULT_READERS);
