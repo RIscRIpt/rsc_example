@@ -6,28 +6,33 @@
 #include <rsc/Readers.h>
 #include <rsc/Context.h>
 
-std::ostream& operator<<(std::ostream &os, std::vector<BYTE> const &bytes) {
-    std::ios::fmtflags flags(os.flags());
-    os << std::hex << std::uppercase << std::setfill('0');
-    for (auto b : bytes) {
-        os << std::setw(2) << static_cast<int>(b) << ' ';
-    }
-    os.flags(flags);
-    return os;
-}
+#include <scc/Hash.h>
+#include <scc/RSA.h>
+#include <scc/Exception.h>
 
-std::ostream& operator<<(std::ostream &os, rsc::rAPDU const &rapdu) {
-    return os << const_cast<rsc::rAPDU&>(rapdu).buffer();
-}
+#include <scb/ByteStream.h>
 
 int main() {
     std::ios::sync_with_stdio(false);
+
+    try {
+        scb::Bytes modulus("AFAD7010F884E2824650F764D47D7951A16EED6DBB881F384DEDB6702E0FB55C0FBEF945A2017705E5286FA249A591E194BDCD74B21720B44CE986F144237A25F95789F38B47EA957F9ADB2372F6D5D41340A147EAC2AF324E8358AE1120EF3F");
+        scb::Bytes exponent("05");
+
+        scc::RSA rsa(modulus, exponent);
+
+        auto result = rsa.transorm("00");
+        std::cout << result << '\n';
+    } catch (scc::Exception const &e) {
+        std::cerr << e.what() << '\n';
+    }
+
     try {
         rsc::Context context(SCARD_SCOPE_USER);
         rsc::Readers readers(context, SCARD_DEFAULT_READERS);
         rsc::Card card(context, readers.list().front());
         std::cout << card.atr();
-        std::cout << card.transmit(rsc::cAPDU(0x00, 0xA4, 0x04, 0x00, { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10 }));
+        std::cout << card.transmit(rsc::cAPDU::SELECT("A0000000031010"));
     } catch (std::exception const &e) {
         std::cerr << e.what() << '\n';
         return -1;
